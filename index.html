@@ -65,17 +65,19 @@
         
         .progress-container { width: 100%; text-align: center; margin-bottom: 10px; flex-shrink: 0;}
         .word-progress-bar {
-            display: flex;
-            flex-wrap: wrap; /* Sığmazsa alt satıra at */
-            gap: 8px 10px; /* Dikey 8px, Yatay 10px boşluk */
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(0, 1fr);
+            column-gap: 10px;
             width: 100%;
-            padding: 5px 10px; /* Klavye ile hizalamak için yatay padding */
-            justify-content: center; /* Ortala */
+            max-width: 800px;
+            padding: 5px 10px;
+            justify-content: stretch;
             direction: rtl;
             margin-bottom: 10px;
             flex-shrink: 0;
             border-radius: var(--border-radius-sm);
-            background-color: rgba(0,0,0,0.02); /* Hafif arka plan */
+            background-color: rgba(0,0,0,0.02);
         }
         
         .word-progress-item {
@@ -191,7 +193,21 @@
             .typing-stats { font-size: 1rem; gap: 8px;}
             .stat-item { padding: 3px 6px; gap: 4px; }
             .stat-item svg { width: 18px; height: 18px;}
-            .word-progress-bar { gap: 5px; padding: 2px 10px; /* Yatay padding'i koru */ margin-bottom: 3px;}
+            .word-progress-bar {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(0, 1fr);
+            column-gap: 10px;
+            width: 100%;
+            max-width: 800px;
+            padding: 5px 10px;
+            justify-content: stretch;
+            direction: rtl;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            border-radius: var(--border-radius-sm);
+            background-color: rgba(0,0,0,0.02);
+        }
             .word-progress-item { font-size: 1rem; padding: 2px 4px; }
             #typing-prompt { font-size: clamp(1.8rem, 5vw, 3rem); min-height: 60px; padding: 5px;}
             #typing-input { font-size: 1.4rem; padding: 6px; }
@@ -239,6 +255,20 @@
         button, .start-title, h2, h3, label, .stat-item span, .results-stats, .progress-label, #results-details .turkish-translation {
             font-family: 'Marhey', sans-serif !important;
         }
+
+
+@media (max-width: 600px){
+  .word-progress-bar{
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0,1fr);
+    column-gap: 8px;
+    width: 100%;
+  }
+  .word-progress-item{
+    font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+    justify-self: center;
+  }
+}
 
 </style>
 </head>
@@ -374,11 +404,34 @@
                     <div id="typing-prompt">Kelime Yükleniyor...</div>
                     <div class="typing-input-area"> <input autocomplete="off" id="typing-input" readonly spellcheck="false" type="text"/> <button id="typing-submit-btn"><svg viewBox="0 0 24 24"><path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"></path></svg></button> </div>
                 </div> <div id="virtual-keyboard"></div> </div> </div> <div class="countdown-overlay" id="countdown-overlay"></div>`;
+            // --- Start prompt visual direction control ---
+            (function(){
+                const promptEl = document.getElementById('typing-prompt');
+                if (!promptEl) return;
+                const applyStartModeDir = () => {
+                    if (promptEl.classList.contains('start-mode')) {
+                        // Show 'Hazır' with LTR so '!' stays on the right visually
+                        promptEl.textContent = 'Hazır';
+                        promptEl.setAttribute('dir','ltr');
+                    }
+                };
+                applyStartModeDir();
+                // Observe class changes to flip dir appropriately
+                const observer = new MutationObserver(() => {
+                    if (!promptEl.classList.contains('start-mode')) {
+                        promptEl.setAttribute('dir','rtl');
+                    } else {
+                        applyStartModeDir();
+                    }
+                });
+                observer.observe(promptEl, { attributes: true, attributeFilter: ['class'] });
+            })();
+
             this.dom = { timer: document.getElementById('timer-value'), score: document.getElementById('score-value'), prompt: document.getElementById('typing-prompt'), input: document.getElementById('typing-input'), submit: document.getElementById('typing-submit-btn'), progressBar: document.getElementById('typing-progress-bar'), keyboard: document.getElementById('virtual-keyboard'), countdownOverlay: document.getElementById('countdown-overlay'), effectsContainer: typingScreen.querySelector('.score-effects-container-typing') };
             typingScreen.querySelector('.back-btn').onclick = () => { App.playSound('menuClick'); App.showScreen('start-screen'); this.stop(); };
             this.dom.input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); this.checkAnswer(); } }; this.dom.submit.onclick = () => this.checkAnswer();
             this.dom.score.textContent = '0'; this.updateTimerDisplay();
-            this.dom.prompt.textContent = 'Hazır!'; this.dom.prompt.className = 'start-mode'; this.dom.prompt.onclick = () => this.handleStartClick();
+            this.dom.prompt.textContent = 'Hazır'; this.dom.prompt.className = 'start-mode'; this.dom.prompt.onclick = () => this.handleStartClick();
             this.dom.input.disabled = true; this.dom.input.readOnly = true; this.dom.input.value = ''; this.createKeyboard(); this.createWordProgressBar();
         },
         handleStartClick() { if (this.dom.prompt?.classList.contains('start-mode')) { App.playSound('menuClick'); this.dom.prompt.classList.remove('start-mode'); this.dom.prompt.onclick = null; this.startCountdown(); } },
@@ -460,6 +513,17 @@
     App.init();
 
     });
+
+            // --- Optional: set CSS var to item count ---
+            (function(){
+              const bar = document.querySelector('.word-progress-bar');
+              if (!bar) return;
+              const items = bar.querySelectorAll('.word-progress-item');
+              if (items.length){
+                bar.style.setProperty('--progress-count', items.length);
+              }
+            })();
+
 </script>
 </body>
 </html>
