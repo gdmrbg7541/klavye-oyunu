@@ -618,7 +618,7 @@
             const colorMap={'ب':'#a0c4ff','ت':'#a0c4ff','ث':'#a0c4ff','ن':'#a0c4ff','ي':'#a0c4ff','ج':'#caffbf','ح':'#caffbf','خ':'#caffbf','د':'#fdffb6','ذ':'#fdffb6','ر':'#ffd6a5','ز':'#ffd6a5','س':'#ffadad','ش':'#ffadad','ص':'#bdb2ff','ض':'#bdb2ff','ط':'#9bf6ff','ظ':'#9bf6ff','ع':'#ffc6ff','غ':'#ffc6ff','ف':'#b9f6ca','ق':'#b9f6ca','ه':'#b3e5fc','ة':'#b3e5fc','ء':'#ffccbc','ؤ':'#ffccbc','ئ':'#ffccbc','ا':'#e0e0e0','ل':'#e0e0e0','ك':'#d1c4e9','م':'#f8bbd0','و':'#c5cae9'}; const defaultColor='#FFFFFF';
             const keys = [
                 ["د","ج","ح","خ","ه","ع","غ","ف","ق","ث","ص","ض"],
-                ["ط","ك","م","ن","ت","ا","l","ب","ي","س","ش","ذ"],
+                ["ط","ك","م","ن","ت","ا","ل","ب","ي","س","ش","ذ"],
                 ["ظ","ز","و","ة","ى","ر","ؤ","ء","ئ"]
             ];
             keys.forEach(row => { const rowDiv = document.createElement('div'); rowDiv.className = 'keyboard-row'; row.forEach(key => { const keyBtn = document.createElement('button'); keyBtn.className = 'keyboard-key'; keyBtn.textContent = key; const bgColor = colorMap[key] || defaultColor; const shadowColor = this.getDarkerColor(bgColor); keyBtn.style.backgroundColor = bgColor; keyBtn.style.boxShadow = `0 4px ${shadowColor}`; keyBtn.onmousedown = () => { keyBtn.style.transform = 'translateY(2px)'; keyBtn.style.boxShadow = `0 2px ${shadowColor}`; }; keyBtn.onmouseup = () => { keyBtn.style.transform = ''; keyBtn.style.boxShadow = `0 4px ${shadowColor}`; }; keyBtn.onmouseleave = () => { keyBtn.style.transform = ''; keyBtn.style.boxShadow = `0 4px ${shadowColor}`; }; rowDiv.appendChild(keyBtn); }); this.dom.keyboard.appendChild(rowDiv); });
