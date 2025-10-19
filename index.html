@@ -642,5 +642,31 @@
             })();
 
 </script>
+<script>
+/* Dokunmatik cihazlarda (hover:none & pointer:coarse) OSK'yi kapat */
+(function () {
+  const isTouch = matchMedia('(hover: none) and (pointer: coarse)').matches;
+  if (!isTouch) return;
+
+  function patchInput(el) {
+    if (!el) return;
+    el.setAttribute('inputmode', 'none');
+    el.setAttribute('autocomplete', 'off');
+    el.setAttribute('autocorrect', 'off');
+    el.setAttribute('autocapitalize', 'off');
+    el.spellcheck = false;
+    el.readOnly = true;               // yazma alanını dokunmatik için salt-okunur yap
+    el.addEventListener('focus', () => el.blur(), true); // odağı anında kaldır
+  }
+
+  // Var olan input'u yamala
+  patchInput(document.getElementById('typing-input'));
+
+  // Oyun sırasında yeniden oluşturulursa tekrar yamala
+  new MutationObserver(() => {
+    patchInput(document.getElementById('typing-input'));
+  }).observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>
 </body>
 </html>
