@@ -258,6 +258,31 @@
   .keyboard-key svg { width: clamp(22px, 6vw, 28px); height: clamp(22px, 6vw, 28px); }
 }
 
+
+/* --- Mobile proxy for input to prevent OS keyboard --- */
+.typing-input-proxy{
+  display:none;
+  font-size: 2rem;
+  padding: 12px;
+  border-radius: var(--border-radius-md);
+  border: 2px solid #d8dee9;
+  background: var(--surface-color);
+  color: var(--text-color);
+  text-align: right;
+  direction: rtl;
+  min-height: 56px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  touch-action: manipulation;
+}
+@media (hover:none) and (pointer:coarse){
+  #typing-input{ display:none !important; }
+  .typing-input-proxy{ display:block; }
+}
+
 </style>
 </head>
 <body>
@@ -390,8 +415,71 @@
                         <div class="word-progress-bar" id="typing-progress-bar"></div>
                     </div>
                     <div id="typing-prompt">Kelime Yükleniyor...</div>
-                    <div class="typing-input-area"> <input autocomplete="off" id="typing-input" readonly spellcheck="false" type="text"/> <button id="typing-submit-btn"><svg viewBox="0 0 24 24"><path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"></path></svg></button> </div>
+                    <div class="typing-input-area"> <input autocomplete="off" id="typing-input" readonly spellcheck="false" type="text"/>
+                <div id="typing-input-proxy" class="typing-input-proxy" aria-hidden="false"></div> <button id="typing-submit-btn"><svg viewBox="0 0 24 24"><path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"></path></svg></button> </div>
                 </div> <div id="virtual-keyboard"></div> </div> </div> <div class="countdown-overlay" id="countdown-overlay"></div>`;
+            // --- Mobile Hidden-Input Bridge (prevents OSK, keeps in-page keyboard working) ---
+            (function(){
+              const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+              const inputEl = document.getElementById('typing-input');
+              const proxyEl = document.getElementById('typing-input-proxy');
+              const vk = document.getElementById('virtual-keyboard');
+              if (!inputEl || !proxyEl || !vk) return;
+
+              if (isMobile){
+                // Make absolutely sure the real input can't summon OSK
+                try {
+                  inputEl.type = 'hidden';
+                  inputEl.setAttribute('readonly','');
+                  inputEl.setAttribute('inputmode','none');
+                  inputEl.setAttribute('tabindex','-1');
+                  inputEl.setAttribute('aria-hidden','true');
+                  inputEl.blur();
+                } catch(e){}
+
+                // Show what's typed via proxy
+                const show = () => { proxyEl.textContent = inputEl.value || ''; };
+                show();
+
+                // Single unified handler (pointerdown + touchend + click with de-dup) – in case older block isn't present
+                let lastSig = '';
+                const signature = (type, key, ts) => type + '|' + (key ? (key.getAttribute('data-key') || (key.textContent || '').trim()) : '') + '|' + Math.floor(ts);
+                const fireInput = () => inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                const appendChar = (ch) => { inputEl.value = (inputEl.value || '') + ch; show(); fireInput(); };
+                const backspace  = () => { inputEl.value = (inputEl.value || '').slice(0, -1); show(); fireInput(); };
+                const insertSpace= () => appendChar(' ');
+                const handle = (type, e) => {
+                  const key = e.target.closest('.keyboard-key');
+                  if (!key) return;
+                  const sig = signature(type, key, e.timeStamp);
+                  if (sig === lastSig) return; lastSig = sig;
+                  e.preventDefault();
+                  if (key.classList.contains('backspace')) { backspace(); return; }
+                  if (key.classList.contains('space-bar')) { insertSpace(); return; }
+                  let ch = key.getAttribute('data-key');
+                  if (!ch) ch = (key.textContent || '').replace(/\s+/g, ' ').trim();
+                  if (!ch) return;
+                  appendChar(ch);
+                };
+
+                // Block other handlers to avoid duplicates (if any)
+                const blocker = (e) => {
+                  const key = e.target.closest && e.target.closest('.keyboard-key');
+                  if (!key) return;
+                  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                };
+                ['click','touchstart','touchend'].forEach(evt => {
+                  vk.addEventListener(evt, blocker, { capture: true, passive: false });
+                });
+                vk.addEventListener('pointerdown', (e) => handle('pd', e), { passive: false });
+                vk.addEventListener('touchend',  (e) => handle('te', e), { passive: false });
+                vk.addEventListener('click',     (e) => handle('ck', e), { passive: false });
+              } else {
+                // Desktop – ensure proxy stays hidden
+                proxyEl.style.display = 'none';
+              }
+            })();
+
             // --- Virtual Keyboard: robust for Samsung/iPad (pointerdown + touchend + click with de-dup) ---
             (function(){
               const inputEl = document.getElementById('typing-input');
