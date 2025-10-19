@@ -452,6 +452,60 @@
                     <div class="typing-input-area"> <input inputmode="none" autocomplete="off" id="typing-input" readonly spellcheck="false" type="text"/ tabindex="-1">
                     <div id="typing-input-proxy" class="typing-input-proxy" aria-hidden="false"></div> <button id="typing-submit-btn"><svg viewBox="0 0 24 24"><path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"></path></svg></button> </div>
                 </div> <div id="virtual-keyboard"></div> </div> </div> <div class="countdown-overlay" id="countdown-overlay"></div>`;
+            // --- Virtual Keyboard: single-handler, no-duplicate, pointer-based ---
+            (function(){
+              const inputEl = document.getElementById('typing-input');
+              const vk = document.getElementById('virtual-keyboard');
+              if (!inputEl || !vk) return;
+
+              // Block other handlers on keys (capture) to avoid duplicates
+              const blocker = (e) => {
+                const key = e.target.closest && e.target.closest('.keyboard-key');
+                if (!key) return;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                e.stopPropagation();
+              };
+              ['click','touchstart'].forEach(evt => {
+                vk.addEventListener(evt, blocker, { capture: true, passive: false });
+              });
+
+              let lastStamp = -1;
+              const fireInput = () => {
+                const ev = new Event('input', { bubbles: true });
+                inputEl.dispatchEvent(ev);
+              };
+              const appendChar = (ch) => {
+                inputEl.value = (inputEl.value || '') + ch;
+                fireInput();
+              };
+              const backspace = () => {
+                inputEl.value = (inputEl.value || '').slice(0, -1);
+                fireInput();
+              };
+              const insertSpace = () => appendChar(' ');
+
+              vk.addEventListener('pointerdown', (e) => {
+                const key = e.target.closest('.keyboard-key');
+                if (!key) return;
+                if (e.timeStamp === lastStamp) return; // guard
+                lastStamp = e.timeStamp;
+                e.preventDefault();
+
+                if (key.classList.contains('backspace')) { backspace(); return; }
+                if (key.classList.contains('space-bar')) { insertSpace(); return; }
+
+                // Prefer data-key
+                let ch = key.getAttribute('data-key');
+                if (!ch) {
+                  // Try textContent, stripping whitespace/newlines/icons
+                  ch = (key.textContent || '').replace(/\s+/g, ' ').trim();
+                }
+                if (!ch) return;
+                appendChar(ch);
+              }, { passive: false });
+            })();
+
             // --- Virtual Keyboard Bridge: write to input without focusing it; fire 'input' events ---
             (function(){
               const inputEl = document.getElementById('typing-input');
