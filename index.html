@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Harmattan:wght@400;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Marhey:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
-        html { font-size: clamp(14px, 2.8vw, 18px); }
+        html { font-size: clamp(12px, 1.2vw, 16px); }
 
         :root {
             --bg-start: #f7f9fc; --bg-end: #e8eef5; --primary-color: #5E81AC; --accent-color: #f7b733; --surface-color: #FFFFFF; --text-color: #2e3440; --text-light-color: #FFFFFF; --correct-color: #2ddc73; --incorrect-color: #f24c4c; --shadow-light: rgba(46, 52, 64, 0.07); --shadow-medium: rgba(46, 52, 64, 0.12); --border-radius-sm: 8px; --border-radius-md: 12px; --border-radius-lg: 16px;
@@ -65,17 +65,19 @@
         
         .progress-container { width: 100%; text-align: center; margin-bottom: 10px; flex-shrink: 0;}
         .word-progress-bar {
-            display: flex;
-            flex-wrap: wrap; /* Sığmazsa alt satıra at */
-            gap: 8px 10px; /* Dikey 8px, Yatay 10px boşluk */
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(0, 1fr);
+            column-gap: 10px;
             width: 100%;
-            padding: 5px 10px; /* Klavye ile hizalamak için yatay padding */
-            justify-content: center; /* Ortala */
+            max-width: 800px;
+            padding: 5px 10px;
+            justify-content: stretch;
             direction: rtl;
             margin-bottom: 10px;
             flex-shrink: 0;
             border-radius: var(--border-radius-sm);
-            background-color: rgba(0,0,0,0.02); /* Hafif arka plan */
+            background-color: rgba(0,0,0,0.02);
         }
         
         .word-progress-item {
@@ -191,7 +193,21 @@
             .typing-stats { font-size: 1rem; gap: 8px;}
             .stat-item { padding: 3px 6px; gap: 4px; }
             .stat-item svg { width: 18px; height: 18px;}
-            .word-progress-bar { gap: 5px; padding: 2px 10px; /* Yatay padding'i koru */ margin-bottom: 3px;}
+            .word-progress-bar {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(0, 1fr);
+            column-gap: 10px;
+            width: 100%;
+            max-width: 800px;
+            padding: 5px 10px;
+            justify-content: stretch;
+            direction: rtl;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            border-radius: var(--border-radius-sm);
+            background-color: rgba(0,0,0,0.02);
+        }
             .word-progress-item { font-size: 1rem; padding: 2px 4px; }
             #typing-prompt { font-size: clamp(1.8rem, 5vw, 3rem); min-height: 60px; padding: 5px;}
             #typing-input { font-size: 1.4rem; padding: 6px; }
@@ -241,25 +257,34 @@
         }
 
 
-/* --- Enhanced Mobile Sizing --- */
 @media (max-width: 600px){
-  .start-title { font-size: clamp(2rem, 6.5vw, 2.4rem); }
-  #typing-prompt { font-size: clamp(2.2rem, 7vw, 3rem); min-height: 120px; padding: 12px; }
-  #typing-input { font-size: clamp(1.6rem, 5.5vw, 2.2rem); padding: 12px; }
-  .typing-stats { font-size: clamp(1.2rem, 4.2vw, 1.6rem); gap: 12px; }
-  .word-progress-item { font-size: clamp(1.1rem, 3.8vw, 1.4rem); }
-  #virtual-keyboard { gap: 6px; padding: 10px; }
-  .keyboard-row { gap: 6px; }
-  .keyboard-key { 
-      font-size: clamp(1.3rem, 5.5vw, 2rem);
-      padding: clamp(10px, 1.8vh, 14px) clamp(8px, 3vw, 14px);
-      min-height: 48px;
+  .word-progress-bar{
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0,1fr);
+    column-gap: 8px;
+    width: 100%;
   }
-  .keyboard-key svg { width: clamp(22px, 6vw, 28px); height: clamp(22px, 6vw, 28px); }
+  .word-progress-item{
+    font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+    justify-self: center;
+  }
 }
 
 
-/* --- Mobile proxy for input to prevent OS keyboard --- */
+/* Mobile: keep disabled input visually normal */
+@media (hover: none) and (pointer: coarse){
+  #typing-input:disabled {
+    background: var(--surface-color);
+    color: var(--text-color);
+    opacity: 1;
+    cursor: default;
+    -webkit-text-fill-color: var(--text-color);
+  }
+  #typing-input { caret-color: transparent; }
+}
+
+
+/* Proxy display for mobile (prevents OS keyboard by hiding the actual input) */
 .typing-input-proxy{
   display:none;
   font-size: 2rem;
@@ -271,16 +296,25 @@
   text-align: right;
   direction: rtl;
   min-height: 56px;
+  box-shadow: 0 0 0 3px rgba(94, 129, 172, 0); /* no focus ring */
+  font-family: 'Harmattan', sans-serif !important;
   white-space: pre-wrap;
   word-break: break-word;
-  user-select: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  touch-action: manipulation;
 }
 @media (hover:none) and (pointer:coarse){
   #typing-input{ display:none !important; }
   .typing-input-proxy{ display:block; }
+}
+
+
+/* Re-enable real input visibility; prevent taps from focusing it on mobile */
+@media (hover:none) and (pointer:coarse){
+  #typing-input{ 
+    display:block !important; 
+    pointer-events:none;       /* taps won't focus => OSK açılmaz */
+    caret-color: transparent; 
+  }
+  .typing-input-proxy{ display:none !important; } /* varsa gizle */
 }
 
 </style>
@@ -415,78 +449,16 @@
                         <div class="word-progress-bar" id="typing-progress-bar"></div>
                     </div>
                     <div id="typing-prompt">Kelime Yükleniyor...</div>
-                    <div class="typing-input-area"> <input autocomplete="off" id="typing-input" readonly spellcheck="false" type="text"/>
-                <div id="typing-input-proxy" class="typing-input-proxy" aria-hidden="false"></div> <button id="typing-submit-btn"><svg viewBox="0 0 24 24"><path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"></path></svg></button> </div>
+                    <div class="typing-input-area"> <input inputmode="none" autocomplete="off" id="typing-input" readonly spellcheck="false" type="text"/ tabindex="-1">
+                    <div id="typing-input-proxy" class="typing-input-proxy" aria-hidden="false"></div> <button id="typing-submit-btn"><svg viewBox="0 0 24 24"><path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"></path></svg></button> </div>
                 </div> <div id="virtual-keyboard"></div> </div> </div> <div class="countdown-overlay" id="countdown-overlay"></div>`;
-            // --- Mobile Hidden-Input Bridge (prevents OSK, keeps in-page keyboard working) ---
-            (function(){
-              const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-              const inputEl = document.getElementById('typing-input');
-              const proxyEl = document.getElementById('typing-input-proxy');
-              const vk = document.getElementById('virtual-keyboard');
-              if (!inputEl || !proxyEl || !vk) return;
-
-              if (isMobile){
-                // Make absolutely sure the real input can't summon OSK
-                try {
-                  inputEl.type = 'hidden';
-                  inputEl.setAttribute('readonly','');
-                  inputEl.setAttribute('inputmode','none');
-                  inputEl.setAttribute('tabindex','-1');
-                  inputEl.setAttribute('aria-hidden','true');
-                  inputEl.blur();
-                } catch(e){}
-
-                // Show what's typed via proxy
-                const show = () => { proxyEl.textContent = inputEl.value || ''; };
-                show();
-
-                // Single unified handler (pointerdown + touchend + click with de-dup) – in case older block isn't present
-                let lastSig = '';
-                const signature = (type, key, ts) => type + '|' + (key ? (key.getAttribute('data-key') || (key.textContent || '').trim()) : '') + '|' + Math.floor(ts);
-                const fireInput = () => inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-                const appendChar = (ch) => { inputEl.value = (inputEl.value || '') + ch; show(); fireInput(); };
-                const backspace  = () => { inputEl.value = (inputEl.value || '').slice(0, -1); show(); fireInput(); };
-                const insertSpace= () => appendChar(' ');
-                const handle = (type, e) => {
-                  const key = e.target.closest('.keyboard-key');
-                  if (!key) return;
-                  const sig = signature(type, key, e.timeStamp);
-                  if (sig === lastSig) return; lastSig = sig;
-                  e.preventDefault();
-                  if (key.classList.contains('backspace')) { backspace(); return; }
-                  if (key.classList.contains('space-bar')) { insertSpace(); return; }
-                  let ch = key.getAttribute('data-key');
-                  if (!ch) ch = (key.textContent || '').replace(/\s+/g, ' ').trim();
-                  if (!ch) return;
-                  appendChar(ch);
-                };
-
-                // Block other handlers to avoid duplicates (if any)
-                const blocker = (e) => {
-                  const key = e.target.closest && e.target.closest('.keyboard-key');
-                  if (!key) return;
-                  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
-                };
-                ['click','touchstart','touchend'].forEach(evt => {
-                  vk.addEventListener(evt, blocker, { capture: true, passive: false });
-                });
-                vk.addEventListener('pointerdown', (e) => handle('pd', e), { passive: false });
-                vk.addEventListener('touchend',  (e) => handle('te', e), { passive: false });
-                vk.addEventListener('click',     (e) => handle('ck', e), { passive: false });
-              } else {
-                // Desktop – ensure proxy stays hidden
-                proxyEl.style.display = 'none';
-              }
-            })();
-
-            // --- Virtual Keyboard: robust for Samsung/iPad (pointerdown + touchend + click with de-dup) ---
+            // --- Virtual Keyboard: single-handler, no-duplicate, pointer-based ---
             (function(){
               const inputEl = document.getElementById('typing-input');
               const vk = document.getElementById('virtual-keyboard');
               if (!inputEl || !vk) return;
 
-              // Block other handlers to avoid duplicates
+              // Block other handlers on keys (capture) to avoid duplicates
               const blocker = (e) => {
                 const key = e.target.closest && e.target.closest('.keyboard-key');
                 if (!key) return;
@@ -494,44 +466,158 @@
                 e.stopImmediatePropagation();
                 e.stopPropagation();
               };
-              ['click','touchstart','touchend'].forEach(evt => {
+              ['click','touchstart'].forEach(evt => {
                 vk.addEventListener(evt, blocker, { capture: true, passive: false });
               });
 
-              let lastSig = '';
-              const signature = (type, key, ts) => type + '|' + (key ? (key.getAttribute('data-key') || (key.textContent || '').trim()) : '') + '|' + Math.floor(ts);
+              let lastStamp = -1;
+              const fireInput = () => {
+                const ev = new Event('input', { bubbles: true });
+                inputEl.dispatchEvent(ev);
+              };
+              const appendChar = (ch) => {
+                inputEl.value = (inputEl.value || '') + ch;
+                fireInput();
+              };
+              const backspace = () => {
+                inputEl.value = (inputEl.value || '').slice(0, -1);
+                fireInput();
+              };
+              const insertSpace = () => appendChar(' ');
 
-              const fireInput = () => inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-              const appendChar = (ch) => { inputEl.value = (inputEl.value || '') + ch; fireInput(); };
-              const backspace  = () => { inputEl.value = (inputEl.value || '').slice(0, -1); fireInput(); };
-              const insertSpace= () => appendChar(' ');
-
-              const handle = (type, e) => {
+              vk.addEventListener('pointerdown', (e) => {
                 const key = e.target.closest('.keyboard-key');
                 if (!key) return;
-                const sig = signature(type, key, e.timeStamp);
-                if (sig === lastSig) return;
-                lastSig = sig;
+                if (e.timeStamp === lastStamp) return; // guard
+                lastStamp = e.timeStamp;
                 e.preventDefault();
 
                 if (key.classList.contains('backspace')) { backspace(); return; }
                 if (key.classList.contains('space-bar')) { insertSpace(); return; }
+
+                // Prefer data-key
                 let ch = key.getAttribute('data-key');
-                if (!ch) ch = (key.textContent || '').replace(/\s+/g, ' ').trim();
+                if (!ch) {
+                  // Try textContent, stripping whitespace/newlines/icons
+                  ch = (key.textContent || '').replace(/\s+/g, ' ').trim();
+                }
                 if (!ch) return;
                 appendChar(ch);
-              };
+              }, { passive: false });
+            })();
 
-              vk.addEventListener('pointerdown', (e) => handle('pd', e), { passive: false });
-              vk.addEventListener('touchend',  (e) => handle('te', e), { passive: false });
-              vk.addEventListener('click',     (e) => handle('ck', e), { passive: false });
+            // --- Virtual Keyboard Bridge: write to input without focusing it; fire 'input' events ---
+            (function(){
+              const inputEl = document.getElementById('typing-input');
+              const vk = document.getElementById('virtual-keyboard');
+              if (!inputEl || !vk) return;
+
+              const appendChar = (ch) => {
+                const v = (inputEl.value || '') + ch;
+                inputEl.value = v;
+                // fire input event so any listeners react
+                const ev = new Event('input', { bubbles: true });
+                inputEl.dispatchEvent(ev);
+              };
+              const backspace = () => {
+                const v = (inputEl.value || '');
+                inputEl.value = v.slice(0, -1);
+                const ev = new Event('input', { bubbles: true });
+                inputEl.dispatchEvent(ev);
+              };
+              const insertSpace = () => appendChar(' ');
+
+              vk.addEventListener('click', (e) => {
+                const key = e.target.closest('.keyboard-key');
+                if (!key) return;
+                e.preventDefault();
+                if (key.classList.contains('backspace')) { backspace(); return; }
+                if (key.classList.contains('space-bar')) { insertSpace(); return; }
+                // Prefer data-key attribute; fallback to textContent
+                const ch = key.getAttribute('data-key') || key.textContent.trim();
+                if (!ch) return;
+                appendChar(ch);
+              }, { passive: false });
+            })();
+
+            // --- Mobile Input Bridge: keep real input hidden; mirror to proxy; block any OSK ---
+            (function(){
+              const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+              const inputEl = document.getElementById('typing-input');
+              const proxyEl = document.getElementById('typing-input-proxy');
+              if (!inputEl || !proxyEl) return;
+              if (!isMobile) { proxyEl.style.display = 'none'; return; }
+
+              // Ensure the hidden input cannot trigger OSK
+              try{
+                inputEl.disabled = true;
+                inputEl.setAttribute('readonly','');
+                inputEl.setAttribute('inputmode','none');
+                inputEl.setAttribute('tabindex','-1');
+                inputEl.setAttribute('aria-hidden','true');
+                inputEl.blur();
+              }catch(e){}
+
+              // Show proxy, prevent selecting/tapping that could trigger selection UI
+              proxyEl.addEventListener('touchstart', e => e.preventDefault(), {passive:false});
+              proxyEl.addEventListener('mousedown', e => e.preventDefault());
+              proxyEl.addEventListener('click', e => e.preventDefault());
+
+              // Mirror mechanics: redefine value property on the specific input element
+              let store = '';
+              Object.defineProperty(inputEl, 'value', {
+                configurable: true,
+                get(){ return store; },
+                set(v){
+                  store = (v==null? '' : String(v));
+                  proxyEl.textContent = store;
+                }
+              });
+
+              // Expose simple helpers on the element (some code may call inputEl.value=... or += etc.)
+              inputEl.setValue = (v)=>{ inputEl.value = v; };
+              inputEl.appendChar = (ch)=>{ inputEl.value = (inputEl.value || '') + ch; };
+              inputEl.clearValue = ()=>{ inputEl.value = ''; };
+
+              // Keep caret illusion off
+              proxyEl.style.caretColor = 'transparent';
+
+              // If any code tries to focus the input, swallow it
+              const of = HTMLElement.prototype.focus;
+              HTMLElement.prototype.focus = function(...args){
+                 if (this === inputEl) { try{ this.blur(); }catch(e){} return; }
+                 return of.apply(this, args);
+              };
+            })();
+
+            // --- Start prompt visual direction control ---
+            (function(){
+                const promptEl = document.getElementById('typing-prompt');
+                if (!promptEl) return;
+                const applyStartModeDir = () => {
+                    if (promptEl.classList.contains('start-mode')) {
+                        // Show 'Hazır' with LTR so '!' stays on the right visually
+                        promptEl.textContent = 'Hazır';
+                        promptEl.setAttribute('dir','ltr');
+                    }
+                };
+                applyStartModeDir();
+                // Observe class changes to flip dir appropriately
+                const observer = new MutationObserver(() => {
+                    if (!promptEl.classList.contains('start-mode')) {
+                        promptEl.setAttribute('dir','rtl');
+                    } else {
+                        applyStartModeDir();
+                    }
+                });
+                observer.observe(promptEl, { attributes: true, attributeFilter: ['class'] });
             })();
 
             this.dom = { timer: document.getElementById('timer-value'), score: document.getElementById('score-value'), prompt: document.getElementById('typing-prompt'), input: document.getElementById('typing-input'), submit: document.getElementById('typing-submit-btn'), progressBar: document.getElementById('typing-progress-bar'), keyboard: document.getElementById('virtual-keyboard'), countdownOverlay: document.getElementById('countdown-overlay'), effectsContainer: typingScreen.querySelector('.score-effects-container-typing') };
             typingScreen.querySelector('.back-btn').onclick = () => { App.playSound('menuClick'); App.showScreen('start-screen'); this.stop(); };
             this.dom.input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); this.checkAnswer(); } }; this.dom.submit.onclick = () => this.checkAnswer();
             this.dom.score.textContent = '0'; this.updateTimerDisplay();
-            this.dom.prompt.textContent = 'Hazır!'; this.dom.prompt.className = 'start-mode'; this.dom.prompt.onclick = () => this.handleStartClick();
+            this.dom.prompt.textContent = 'Hazır'; this.dom.prompt.className = 'start-mode'; this.dom.prompt.onclick = () => this.handleStartClick();
             this.dom.input.disabled = true; this.dom.input.readOnly = true; this.dom.input.value = ''; this.createKeyboard(); this.createWordProgressBar();
         },
         handleStartClick() { if (this.dom.prompt?.classList.contains('start-mode')) { App.playSound('menuClick'); this.dom.prompt.classList.remove('start-mode'); this.dom.prompt.onclick = null; this.startCountdown(); } },
@@ -613,6 +699,17 @@
     App.init();
 
     });
+
+            // --- Optional: set CSS var to item count ---
+            (function(){
+              const bar = document.querySelector('.word-progress-bar');
+              if (!bar) return;
+              const items = bar.querySelectorAll('.word-progress-item');
+              if (items.length){
+                bar.style.setProperty('--progress-count', items.length);
+              }
+            })();
+
 </script>
 </body>
 </html>
