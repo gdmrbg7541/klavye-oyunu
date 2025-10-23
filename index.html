@@ -376,11 +376,19 @@
         initAudio() { if (this.state.audioCtx && this.state.audioCtx.state === 'running') return; try { if (!this.state.audioCtx) { this.state.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if (this.state.audioCtx.state === 'suspended') { this.state.audioCtx.resume().then(() => { this.state.isAudioInitialized = true; }); } else { this.state.isAudioInitialized = true; } } catch (e) { console.error("Web Audio API desteklenmiyor."); this.state.isAudioInitialized = false; } },
         playSound(soundKey) { if (!this.state.isAudioInitialized || !this.state.audioCtx || this.state.audioCtx.state !== 'running') return; const sounds = { flip: { f: 200, t: 'triangle', d: 0.1 }, match: { f: 440, t: 'sine', d: 0.2 }, menuClick: { f: 600, t: 'square', d: 0.08 }, touch: { f: 300, t: 'sine', d: 0.05 }, correct: { f: 523.25, t: 'sine', d: 0.2 }, incorrect: { f: 164.81, t: 'square', d: 0.2 }, countdown: { f: 880, t: 'sine', d: 0.15 } }; const sound = sounds[soundKey]; if (!sound) return; const g = this.state.audioCtx.createGain(); g.connect(this.state.audioCtx.destination); g.gain.setValueAtTime(0, this.state.audioCtx.currentTime); g.gain.linearRampToValueAtTime(0.1, this.state.audioCtx.currentTime + 0.01); g.gain.linearRampToValueAtTime(0, this.state.audioCtx.currentTime + sound.d); const o = this.state.audioCtx.createOscillator(); o.type = sound.t; o.frequency.value = sound.f; o.connect(g); o.start(0); o.stop(this.state.audioCtx.currentTime + sound.d); },
         loadAllWords() { this.state.allWords = Object.values(Data).flatMap(grade => Object.values(grade.words).flatMap(unit => Object.values(unit.lessons).flatMap(lesson => lesson.words || []))).filter(word => word && word.arabic && !word.arabic.includes(' ')); console.log(`Toplam ${this.state.allWords.length} adet boşluksuz kelime yüklendi.`); },
+        
+        // --- BU FONKSİYON GÜNCELLENDİ ---
         initStartScreenListeners() {
             if (this.dom.difficultyOptions) {
                 this.dom.difficultyOptions.addEventListener('click', (e) => {
                     const button = e.target.closest('.difficulty-button');
                     if (!button) return;
+
+                    // --- EKLENEN SATIR ---
+                    // Kullanıcı ekrana dokundu, sesi "uyandır" (izni al).
+                    this.initAudio(); 
+                    // --- EKLENEN SATIR SONU ---
+
                     console.log("Difficulty button clicked:", button.dataset.difficulty); this.playSound('menuClick');
                     this.state.selectedDifficulty = button.dataset.difficulty; this.updateSelection(this.dom.difficultyOptions, button);
                     switch (this.state.selectedDifficulty) {
@@ -392,8 +400,15 @@
                     console.log("Selected difficulty:", this.state.selectedDifficulty, "Settings:", this.state.gameSettings); this.checkStartButtonState();
                 });
             } else { console.error("Zorluk seçenekleri konteyneri bulunamadı!"); }
+            
             if (this.dom.startGameBtn) {
                 this.dom.startGameBtn.onclick = () => {
+                    
+                    // --- EKLENEN SATIR ---
+                    // (Eğer zorluk seçilmeden butona basılırsa diye) sesi "uyandır".
+                    this.initAudio();
+                    // --- EKLENEN SATIR SONU ---
+
                     console.log("Start game button clicked"); App.playSound('menuClick');
                     if (!App.state.selectedDifficulty) return;
                     const wordsForGame = Utils.shuffleArray(App.state.allWords).slice(0, App.state.gameSettings.wordCount);
@@ -402,6 +417,8 @@
                 };
             } else { console.error("Başla butonu bulunamadı!"); }
         },
+        // --- GÜNCELLEME SONU ---
+
         updateSelection(container, selectedButton) { if (!container) return; container.querySelectorAll('.selected').forEach(btn => btn.classList.remove('selected')); if (selectedButton) { selectedButton.classList.add('selected'); console.log("Applied 'selected' class to:", selectedButton.dataset.difficulty || 'button'); } },
         checkStartButtonState() { if (!this.dom.startGameBtn) return; this.dom.startGameBtn.disabled = !this.state.selectedDifficulty; console.log("Start button disabled:", this.dom.startGameBtn.disabled); },
         resetStartScreen() { this.state.selectedDifficulty = null; this.updateSelection(this.dom.difficultyOptions, null); this.checkStartButtonState(); TypingGame.stop(); },
